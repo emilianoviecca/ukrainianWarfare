@@ -40,3 +40,5 @@ xvfb-run godot --resolution 2400x1080 --fixed-fps 30 -- --test=touch   # comandi
 ## Crediti
 
 Texture a griglia: [Prototype Textures](https://kenney.nl/assets/prototype-textures) di Kenney, licenza CC0.
+
+Soldati: [Blocky Characters](https://kenney.nl/assets/blocky-characters) di Kenney, licenza CC0, con divise ridipinte (`tools/make_soldiers.py`).

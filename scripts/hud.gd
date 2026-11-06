@@ -10,6 +10,7 @@ var active := false
 var msg := ""; var msg_t := 0.0; var msg2 := ""; var msg2_t := 0.0
 var hits := []; var pings := []; var hitmark_t := 0.0; var hitmark_head := false; var dmg_flash := 0.0; var kill_t := 0.0
 var map_tex: Texture2D
+var icons := {}
 var buttons := {}
 var menu_box: Control; var end_box: Control; var pause_box: Control
 var btn_diff: Button; var btn_sens: Button
@@ -25,6 +26,10 @@ func build() -> void:
 	font = ThemeDB.fallback_font
 	var fv := FontVariation.new(); fv.base_font = font; fv.variation_embolden = 0.7; bold = fv
 	var img := Image.new(); img.load_png_from_buffer(FileAccess.get_file_as_bytes("res://assets/minimap.dat")); map_tex = ImageTexture.create_from_image(img)
+	for n in ["fire", "reload", "aim"]:
+		var ii := Image.new(); ii.load_png_from_buffer(FileAccess.get_file_as_bytes("res://assets/icon_%s.dat" % n)); ii.generate_mipmaps()
+		icons[n] = ImageTexture.create_from_image(ii)
+	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	_build_menu()
 
 func _style(col: Color, border := Color(0, 0, 0, 0)) -> StyleBoxFlat:
@@ -234,6 +239,14 @@ func _btn(k: String, label: String, on := false, col := FG) -> void:
 	draw_arc(b.p, b.r, 0, TAU, 40, Color(1, 1, 1, 0.55), 2.5, true)
 	_ctr(b.p, label, 19 if b.r < 70 else 24, col)
 
+func _icon_btn(k: String, ic: String, on: bool, label := "") -> void:
+	var b = buttons[k]
+	draw_circle(b.p, b.r, Color(0.05, 0.06, 0.07, 0.5))
+	if on: draw_circle(b.p, b.r, Color(YEL.r, YEL.g, YEL.b, 0.34))
+	var d: float = b.r * 2.0 - 4.0
+	draw_texture_rect(icons[ic], Rect2(b.p - Vector2(d, d) * 0.5, Vector2(d, d)), false, YEL if on and ic == "aim" else Color.WHITE)
+	if label != "": _ctr(b.p, label, 20)
+
 func _draw() -> void:
 	if main == null or main.mode == main.MENU or main.player == null: return
 	var s := get_viewport_rect().size
@@ -286,10 +299,10 @@ func _controls(s: Vector2, pl) -> void:
 	draw_circle(k, 38, Color(1, 1, 1, 0.42))
 	if pl.was_sprint: draw_arc(o, 92, -PI * 0.75, -PI * 0.25, 18, YEL, 6.0, true)
 	if joy_touch < 0: _txt(o + Vector2(-90, 124), "muoviti", 17, Color(1, 1, 1, 0.75), HORIZONTAL_ALIGNMENT_CENTER, 180.0)
-	_btn("fire", "SPARA", fire_held, FG)
-	_btn("fire2", "SPARA", fire_held, FG)
-	_btn("aim", "MIRA", pl.aiming, FG)
-	_btn("reload", "RICARICA" if false else "RICAR.", pl.reload_t > 0.0)
+	_icon_btn("fire", "fire", fire_held)
+	_icon_btn("fire2", "fire", fire_held)
+	_icon_btn("aim", "aim", pl.aiming, "Mira")
+	_icon_btn("reload", "reload", pl.reload_t > 0.0)
 	_btn("crouch", "GIÙ", pl.crouching)
 	_btn("heal", "CURA %d" % pl.medkits, pl.heal_t > 0.0, FG if pl.medkits > 0 else Color(1, 1, 1, 0.4))
 	_btn("pause", "II")

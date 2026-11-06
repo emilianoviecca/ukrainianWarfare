@@ -171,6 +171,7 @@ func _fire_one() -> void:
 	var pl = main.player
 	if pl.dead: return
 	var mz: Vector3 = model.muzzle.global_position
+	model.recoil()
 	var aim: Vector3 = pl.global_position + Vector3(0, 0.95 if pl.crouching else 1.3, 0)
 	var d := mz.distance_to(aim)
 	var p := clampf(0.30 * (1.0 - d / 130.0), 0.025, 0.30) * skill

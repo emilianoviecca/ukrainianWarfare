@@ -207,6 +207,7 @@ func _fire() -> void:
 	if not scoped():
 		main.fx.tracer(mz, end)
 		main.fx.flash(mz)
+		model.recoil()
 	main.fx.play2d(data.sfx, -1.0, randf_range(0.96, 1.04))
 	pitch = minf(pitch + float(data.kick), deg_to_rad(62)); yaw += randf_range(-1, 1) * float(data.kick) * 0.4
 	shake = max(shake, float(data.kick) * 4.0)

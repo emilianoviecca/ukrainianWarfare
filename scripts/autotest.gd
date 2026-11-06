@@ -35,6 +35,7 @@ func _process(dt: float) -> void:
 	elif mode.begins_with("sim"): _sim(dt)
 	elif mode == "aim": _aim_test()
 	elif mode == "drop": _drop_test()
+	elif mode == "look": _look()
 
 var aim_b = null; var aim_case := 0; var aim_shots := 0
 func _aim_test() -> void:
@@ -55,6 +56,27 @@ func _aim_test() -> void:
 		print("25m senza mirare: colpi=", pl.shots_fired - aim_shots, " hp bot=", aim_b.hp, " dead=", aim_b.dead, " vivi=", main.alive)
 		_ok("Il mirino centrato colpisce un nemico fermo a 25 m", aim_b.hp < 100.0 or aim_b.dead)
 		get_tree().quit(0)
+
+# Primo piano dei soldati per controllare modello, divise e armi.
+func _look() -> void:
+	if phase == 0:
+		phase = 1; main.start_match(); var pl = main.player
+		for b in main.bots: b.set_physics_process(false); b.global_position = Vector3(300, 0, 200)
+		pl.global_position = Vector3(-60, 0, 30); pl.yaw = 0.0; pl.give("ak"); pl.select("ak"); pl.set_physics_process(false)
+		var cam := Camera3D.new(); add_child(cam); cam.fov = 30; cam.global_position = Vector3(-60, 1.5, 38); cam.look_at(Vector3(-60, 0.95, 30)); cam.make_current()
+		main.hud.visible = false
+		var i := 0
+		for b in main.bots.slice(0, 4):
+			b.global_position = Vector3(-62.4 + i * 1.6, 0, 30); b.model.rotation.y = [0.0, PI * 0.5, 0.3, PI][i]; b.model.animate(0.2, [0.0, 3.0, 0.0, 6.0][i], i == 2); i += 1
+		var m = main.bots[0].model
+		for mi in m.inst.find_children("*", "MeshInstance3D", true, false):
+			print(mi.get_parent().name, " aabb ", mi.get_aabb(), " y=", mi.global_position.y)
+		for n in [m.head, m.torso, m.arm_r, m.leg_l]: print(n.name, " pos ", n.position, " g ", n.global_position)
+		pl.global_position = Vector3(-59, 0, 33); pl.model.rotation.y = 0.0 - 0.5; pl.model.animate(0.1, 0.0, false)
+		main.bots[3].global_position = Vector3(-57.5, 0, 28); main.bots[3].model.rotation.y = 0.5; main.bots[3].model.die(); main.bots[3].model.animate(1.5, 0, false)
+		t = 0.0
+	elif phase == 1 and t > 1.2:
+		phase = 2; await _shot("10_soldati"); get_tree().quit(0)
 
 var drop_n := 0; var res0 := 0
 func _drop_test() -> void:
@@ -103,7 +125,8 @@ func _visual() -> void:
 		for b in main.bots: b.set_physics_process(false)
 		var i := 0
 		for b in main.bots.slice(0, 4):
-			b.global_position = pl.global_position + Vector3(-10 + i * 7, 0, -22 - i * 4); b.model.animate(0.1, 3.0, false); i += 1
+			b.global_position = pl.global_position + Vector3(-6 + i * 3.5, 0, -8 - i * 3); b.rotation.y = 0.5 * i; b.model.rotation.y = PI * 0.6 * (i + 1); b.model.animate(0.25, 3.0 + i, i == 1); i += 1
+		main.bots[3].take_damage(500.0)
 	elif phase == 2 and t > 6.0:
 		var q = main.player; print("MODEL vis=", q.model.is_visible_in_tree(), " pos=", q.model.global_position, " torso=", q.model.torso.global_position, " cam=", q.cam.global_position, " len=", q.arm.spring_length, " children=", q.model.get_child_count())
 		phase = 3; await _shot("02_gioco_piazzale"); main.player.give("ak"); main.player.give("svd")
