@@ -330,15 +330,14 @@ func _helicopter(p: Vector3, rot: float) -> void:
 	smoke_spots.append(c + Vector3.UP)
 	loot_spots.append(p + Basis(Vector3.UP, rot) * Vector3(5, 0, 2))
 
-func _vehicle(p: Vector3, rot: float, burnt: bool) -> void:
-	var bs := Basis(Vector3.UP, rot)
-	var col := BURNT if burnt else OLIVE
-	batch.box(Transform3D(bs, p + Vector3(0, 0.9, 0)), Vector3(2.9, 1.1, 5.8), col)
-	batch.box(Transform3D(bs, p + bs * Vector3(0, 1.75, -0.3)), Vector3(1.6, 0.7, 2.0), col.darkened(0.1))
-	batch.box(Transform3D(bs, p + bs * Vector3(0, 1.8, 1.8)), Vector3(0.14, 0.14, 2.8), BURNT)
-	for s in [-1.45, 1.45]:
-		batch.box(Transform3D(bs, p + bs * Vector3(s, 0.45, 0)), Vector3(0.45, 0.9, 5.9), Color(0.1, 0.1, 0.1))
-	solid(p + Vector3(0, 1.0, 0), Vector3(3.3, 2.0, 6), col, rot, false)
+# Carri Quaternius: geometria cotta nella mesh statica senza griglia, collisione a scatola.
+func _vehicle(p: Vector3, rot: float, burnt: bool, heavy := false, tilt := 0.0) -> void:
+	var bs := Basis(Vector3.UP, rot).rotated(Basis(Vector3.UP, rot) * Vector3.RIGHT, tilt)
+	var path := "res://assets/models/tank_heavy.bin" if heavy else "res://assets/models/tank.bin"
+	var dim: Vector3 = trees_batch.add_baked(path, Transform3D(bs, p), burnt)
+	var hgt := minf(dim.y, 2.6)
+	solid(p + Vector3(0, hgt * 0.5, 0), Vector3(dim.x * 0.92, hgt, dim.z * 0.72), BURNT, rot, false)
+	if burnt and smoke_spots.size() < 8: smoke_spots.append(p + Vector3.UP * 2.4)
 
 func _truck(p: Vector3, rot: float) -> void:
 	var bs := Basis(Vector3.UP, rot); var g := Color(0.28, 0.32, 0.22)
@@ -355,10 +354,14 @@ func _wrecks() -> void:
 	_helicopter(Vector3(120, 0, 160), -1.2)
 	_helicopter(Vector3(-40, 0, -210), 2.2)
 	_vehicle(Vector3(-52, 0, 30), 0.4, true)
-	_vehicle(Vector3(40, 0, -30), 2.0, true)
-	_vehicle(Vector3(210, 0, 118), 1.3, true)
-	_vehicle(Vector3(-262, 0, 82), 2.4, true)
+	_vehicle(Vector3(40, 0, -30), 2.0, true, true)
+	_vehicle(Vector3(210, 0, 118), 1.3, true, false, 0.06)
+	_vehicle(Vector3(-262, 0, 82), 2.4, true, true)
 	_vehicle(Vector3(-110, 0, 64), 1.5, false)
+	_vehicle(Vector3(95, 0, 150), -0.7, true, false, -0.05)
+	_vehicle(Vector3(-20, 0, 150), 2.9, false, true)
+	_vehicle(Vector3(-200, 0, -30), 0.9, true)
+	_vehicle(Vector3(300, 0, -40), 1.9, false)
 	_truck(Vector3(-280, 0, -6), 1.57)
 	_truck(Vector3(146, 0, -14), 1.3)
 	_truck(Vector3(240, 0, -15), 1.6)

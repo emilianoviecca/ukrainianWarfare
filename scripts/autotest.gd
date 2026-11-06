@@ -44,10 +44,19 @@ func _aim_test() -> void:
 		phase = 1; main.start_match(); var pl = main.player; pl.give("ak"); pl.reserve.ak = 900; pl.select("ak")
 		for b in main.bots: b.set_physics_process(false); b.global_position = Vector3(300, 0, 200)
 		aim_b = main.bots[0]; t = 0.0
-		pl.global_position = Vector3(-60, 0, 100); pl.yaw = 0.0; pl.pitch = 0.0
-		aim_b.global_position = pl.global_position + Vector3(0, 0, -25)
+		# Sceglie un punto con la linea di tiro libera: gli ostacoli sparsi cambiano con la mappa.
+		var pp := Vector3.ZERO
+		for k in 400:
+			pp = Vector3(randf_range(-300, 300), 0, randf_range(-200, 200))
+			if main.world.is_free(pp) and main.world.is_free(pp + Vector3(0, 0, -25)) and main.ray(pp + Vector3(0.9, 1.9, 4), pp + Vector3(0, 1.2, -25), 1).is_empty() and main.ray(pp + Vector3.UP, pp + Vector3(0, 1, -25), 1).is_empty(): break
+		pl.global_position = pp; pl.yaw = 0.0; pl.pitch = 0.0
+		aim_b.global_position = pp + Vector3(0, 0, -25)
 		return
 	var pl = main.player
+	if phase <= 2:
+		# Il giocatore centra il mirino sul nemico, come farebbe con il dito.
+		var av: Vector3 = aim_b.global_position + Vector3(0, 1.2, 0) - pl.cam.global_position
+		pl.yaw = atan2(-av.x, -av.z); pl.pitch = atan2(av.y, Vector2(av.x, av.z).length())
 	if phase == 1 and t > 0.5:
 		phase = 2; print("bot a ", aim_b.global_position, " cam ", pl.cam.global_position, " forward ", -pl.cam.global_transform.basis.z, " on_target ", pl.on_target)
 		aim_shots = pl.shots_fired; main.hud.fire_held = true; t = 0.0
@@ -63,7 +72,7 @@ func _look() -> void:
 		phase = 1; main.start_match(); var pl = main.player
 		for b in main.bots: b.set_physics_process(false); b.global_position = Vector3(300, 0, 200)
 		pl.global_position = Vector3(-60, 0, 30); pl.yaw = 0.0; pl.give("ak"); pl.select("ak"); pl.set_physics_process(false)
-		var cam := Camera3D.new(); add_child(cam); cam.fov = 30; cam.global_position = Vector3(-60, 1.5, 38); cam.look_at(Vector3(-60, 0.95, 30)); cam.make_current()
+		var cam := Camera3D.new(); add_child(cam); cam.fov = 30; cam.global_position = Vector3(-96, 4.0, 74); cam.look_at(Vector3(-110, 1.0, 62)); cam.make_current()
 		main.hud.visible = false
 		var i := 0
 		for b in main.bots.slice(0, 4):

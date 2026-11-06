@@ -74,12 +74,12 @@ func _smokes() -> void:
 	var mt := StandardMaterial3D.new(); mt.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED; mt.albedo_texture = fx.tex_smoke; mt.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mt.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES; mt.vertex_color_use_as_albedo = true
 	var qm := QuadMesh.new(); qm.material = mt
-	var grad := Gradient.new(); grad.offsets = PackedFloat32Array([0.0, 0.2, 1.0]); grad.colors = PackedColorArray([Color(0.16, 0.15, 0.14, 0.0), Color(0.15, 0.14, 0.13, 0.55), Color(0.4, 0.4, 0.39, 0.0)])
+	var grad := Gradient.new(); grad.offsets = PackedFloat32Array([0.0, 0.2, 1.0]); grad.colors = PackedColorArray([Color(0.16, 0.15, 0.14, 0.0), Color(0.15, 0.14, 0.13, 0.38), Color(0.4, 0.4, 0.39, 0.0)])
 	var cv := Curve.new(); cv.add_point(Vector2(0, 0.35)); cv.add_point(Vector2(1, 1))
 	for s in world.smoke_spots:
-		var p := CPUParticles3D.new(); p.mesh = qm; p.amount = 14; p.lifetime = 8.0; p.preprocess = 8.0; p.position = s; p.cast_shadow = 0
-		p.direction = Vector3(0.22, 1, 0.1); p.spread = 9.0; p.gravity = Vector3(0.45, 0.25, 0.1); p.initial_velocity_min = 2.0; p.initial_velocity_max = 3.5
-		p.scale_amount_min = 7.0; p.scale_amount_max = 11.0; p.scale_amount_curve = cv; p.color_ramp = grad; p.local_coords = false
+		var p := CPUParticles3D.new(); p.mesh = qm; p.amount = 22; p.lifetime = 9.0; p.preprocess = 9.0; p.position = s; p.cast_shadow = 0
+		p.direction = Vector3(0.22, 1, 0.1); p.spread = 9.0; p.gravity = Vector3(0.45, 0.25, 0.1); p.initial_velocity_min = 1.2; p.initial_velocity_max = 2.2
+		p.scale_amount_min = 6.0; p.scale_amount_max = 9.0; p.scale_amount_curve = cv; p.color_ramp = grad; p.local_coords = false
 		add_child(p)
 
 func _zone_visual() -> void:
