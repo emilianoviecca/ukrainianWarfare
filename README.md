@@ -6,7 +6,7 @@ Progetto personale, non destinato a store. La mappa è una ricostruzione semplif
 
 ## Installazione sul telefono
 
-Scarica l'APK da **Releases**, aprilo sul telefono e autorizza l'installazione da quella sorgente.
+Copia il file `UkrainianWarfare.apk` sul telefono, aprilo e autorizza l'installazione da quella sorgente. L'APK non è nel repository: si ottiene dalla compilazione descritta sotto.
 
 ## Struttura
 
