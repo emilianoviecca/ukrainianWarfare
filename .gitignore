@@ -4,3 +4,4 @@
 *.idsig
 *.keystore
 build/
+!apk/UkrainianWarfare.apk
