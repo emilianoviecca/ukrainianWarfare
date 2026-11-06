@@ -36,3 +36,7 @@ Conserva sempre lo stesso keystore: un APK firmato con una chiave diversa non si
 godot --headless --fixed-fps 60 -- --test=sim1     # partita simulata
 xvfb-run godot --resolution 2400x1080 --fixed-fps 30 -- --test=touch   # comandi touch
 ```
+
+## Crediti
+
+Texture a griglia: [Prototype Textures](https://kenney.nl/assets/prototype-textures) di Kenney, licenza CC0.

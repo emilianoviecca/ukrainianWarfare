@@ -125,18 +125,23 @@ func _loot_item(type: String, p: Vector3) -> void:
 		"ak", "svd", "pistol":
 			var gm: Mesh = Humanoid.gun_mesh(type)
 			var g := MeshInstance3D.new(); g.mesh = gm; g.material_override = Humanoid.mat; g.rotation = Vector3(0, 0, PI / 2 * 0.15); g.position.y = 0.5; g.scale = Vector3(1.5, 1.5, 1.5); n.add_child(g); col = Color(1, 0.75, 0.15)
-		"ammo":
+		"ammo", "ammo_ak", "ammo_svd":
 			b.at(Vector3(0, 0.25, 0), Vector3(0.7, 0.45, 0.45), Color(0.27, 0.33, 0.18)); b.at(Vector3(0, 0.5, 0), Vector3(0.72, 0.06, 0.47), Color(0.75, 0.62, 0.2)); col = Color(0.95, 0.8, 0.3)
 		"med":
 			b.at(Vector3(0, 0.25, 0), Vector3(0.55, 0.42, 0.3), Color(0.92, 0.92, 0.9)); b.at(Vector3(0, 0.25, -0.16), Vector3(0.28, 0.09, 0.02), Color(0.85, 0.1, 0.1)); b.at(Vector3(0, 0.25, -0.16), Vector3(0.09, 0.28, 0.02), Color(0.85, 0.1, 0.1)); col = Color(0.95, 0.3, 0.3)
 		"armor":
 			b.at(Vector3(0, 0.45, 0), Vector3(0.5, 0.65, 0.22), Color(0.22, 0.27, 0.17)); b.at(Vector3(0, 0.45, -0.12), Vector3(0.28, 0.3, 0.03), Color(0.14, 0.16, 0.12)); col = Color(0.35, 0.65, 1.0)
-	if type in ["ammo", "med", "armor"]:
+	if type in ["ammo", "ammo_ak", "ammo_svd", "med", "armor"]:
 		var mi := MeshInstance3D.new(); mi.mesh = b.build(); mi.material_override = Humanoid.mat; n.add_child(mi)
 	var ring := MeshInstance3D.new(); var cm := CylinderMesh.new(); cm.top_radius = 0.7; cm.bottom_radius = 0.7; cm.height = 0.02; cm.radial_segments = 16; ring.mesh = cm
 	var rm := StandardMaterial3D.new(); rm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED; rm.albedo_color = Color(col.r, col.g, col.b, 0.45); rm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA; ring.material_override = rm; ring.position.y = 0.03; ring.cast_shadow = 0; n.add_child(ring)
 	add_child(n); n.global_position = p
 	loot.append({"n": n, "type": type})
+
+func _drop(type: String, body_p: Vector3, off: Vector3) -> void:
+	var p := body_p + off
+	if not ray(body_p + Vector3.UP * 0.5, p + Vector3.UP * 0.5, 1).is_empty(): p = body_p
+	_loot_item(type, p)
 
 func _spawn_loot() -> void:
 	var spots: Array = world.loot_spots.duplicate(); spots.shuffle()
@@ -234,9 +239,12 @@ func on_bot_dead(b, by_player: bool) -> void:
 	alive -= 1
 	if by_player:
 		kills += 1; hud.kill_note()
-	if randf() < 0.45:
-		var kinds := ["ammo", "ammo", "med", "armor"]
-		_loot_item(kinds[randi() % kinds.size()], b.global_position)
+	# Ogni nemico lascia l'arma che impugnava e i suoi proiettili.
+	var body_p: Vector3 = b.global_position
+	_drop(b.gun, body_p, Vector3(0.75, 0, 0.25))
+	_drop("ammo_" + b.gun, body_p, Vector3(-0.75, 0, -0.25))
+	if randf() < 0.25:
+		_drop("med" if randf() < 0.6 else "armor", body_p, Vector3(0, 0, 0.9))
 	if alive <= 0 and mode == PLAY: _end(true)
 
 func on_player_dead() -> void:

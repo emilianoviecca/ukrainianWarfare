@@ -9,7 +9,7 @@ var think_t := 0.0; var react_t := 0.0; var burst_left := 0; var burst_t := 0.0;
 var has_token := false; var last_seen := Vector3.ZERO; var alert_t := 0.0; var repath_t := 0.0
 var strafe := Vector3.ZERO; var strafe_t := 0.0; var patrol_goal := Vector3.ZERO
 var last_pos := Vector3.ZERO; var stuck_t := 0.0; var see := false; var despawn_t := 16.0; var speed_now := 0.0
-var skill := 1.0; var vision := 130.0; var face_yaw := 0.0
+var skill := 1.0; var vision := 130.0; var face_yaw := 0.0; var gun := "ak"
 
 func setup(m, skill_k: float, vision_m: float) -> void:
 	main = m; skill = skill_k; vision = vision_m
@@ -17,6 +17,9 @@ func setup(m, skill_k: float, vision_m: float) -> void:
 	motion_mode = CharacterBody3D.MOTION_MODE_FLOATING
 	var cs := CollisionShape3D.new(); var c := CapsuleShape3D.new(); c.radius = 0.38; c.height = 1.85; cs.shape = c; cs.position.y = 0.925; add_child(cs)
 	model = Humanoid.new(); add_child(model); model.setup("ru")
+	# Alcuni nemici sono tiratori scelti: l'arma impugnata è quella che lasceranno a terra.
+	if randf() < 0.12:
+		gun = "svd"; vision += 45.0; model.set_gun("svd")
 	think_t = randf() * 0.4
 	face_yaw = randf() * TAU
 
@@ -157,12 +160,12 @@ func _shoot(dt: float) -> void:
 			burst_t = randf_range(0.11, 0.16); burst_left -= 1
 			_fire_one()
 			if burst_left == 0:
-				_release(); gap_t = randf_range(0.9, 2.1) / skill
+				_release(); gap_t = randf_range(0.9, 2.1) / skill * (1.8 if gun == "svd" else 1.0)
 	else:
 		gap_t -= dt
 		if gap_t <= 0.0 and main.request_token(self):
 			has_token = true
-			burst_left = randi_range(3, 5); burst_t = 0.0
+			burst_left = 1 if gun == "svd" else randi_range(3, 5); burst_t = 0.0
 
 func _fire_one() -> void:
 	var pl = main.player
@@ -182,4 +185,4 @@ func _fire_one() -> void:
 	if d < 170.0: main.fx.flash(mz)
 	main.fx.play3d("enemy", mz, -2.0, randf_range(0.92, 1.08))
 	main.hud.add_ping(global_position)
-	if hit: pl.hurt(randf_range(9.0, 13.0) * main.enemy_damage, global_position)
+	if hit: pl.hurt(randf_range(9.0, 13.0) * main.enemy_damage * (2.4 if gun == "svd" else 1.0), global_position)

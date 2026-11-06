@@ -34,6 +34,7 @@ func _process(dt: float) -> void:
 	elif mode == "touch": _touch_test()
 	elif mode.begins_with("sim"): _sim(dt)
 	elif mode == "aim": _aim_test()
+	elif mode == "drop": _drop_test()
 
 var aim_b = null; var aim_case := 0; var aim_shots := 0
 func _aim_test() -> void:
@@ -54,6 +55,44 @@ func _aim_test() -> void:
 		print("25m senza mirare: colpi=", pl.shots_fired - aim_shots, " hp bot=", aim_b.hp, " dead=", aim_b.dead, " vivi=", main.alive)
 		_ok("Il mirino centrato colpisce un nemico fermo a 25 m", aim_b.hp < 100.0 or aim_b.dead)
 		get_tree().quit(0)
+
+var drop_n := 0; var res0 := 0
+func _drop_test() -> void:
+	# Elimina un nemico sparandogli davvero, poi ci cammina sopra.
+	if phase == 0:
+		phase = 1; main.start_match(); var pl = main.player
+		for b in main.bots: b.set_physics_process(false); b.global_position = Vector3(300, 0, 200)
+		aim_b = main.bots[0]; aim_b.gun = "svd"; aim_b.model.set_gun("svd"); t = 0.0
+		for l in main.loot: l.n.queue_free()
+		main.loot.clear()
+		pl.global_position = Vector3(-60, 0, 100); pl.yaw = 0.0
+		aim_b.global_position = pl.global_position + Vector3(0, 0, -10)
+		return
+	var pl = main.player
+	if phase <= 2 and not aim_b.dead:
+		var v: Vector3 = aim_b.global_position + Vector3(0, 1.2, 0) - pl.cam.global_position
+		pl.yaw = atan2(-v.x, -v.z); pl.pitch = atan2(v.y, Vector2(v.x, v.z).length())
+	if phase == 2 and t > 15.0:
+		_ok("Il nemico muore sotto i colpi", false); get_tree().quit(1)
+	if phase == 1 and t > 0.5:
+		phase = 2; main.hud.fire_held = true; t = 0.0
+	elif phase == 2 and aim_b.dead:
+		phase = 3; main.hud.fire_held = false; t = 0.0
+		var types := []
+		for l in main.loot: types.append(l.type)
+		print("oggetti a terra: ", types)
+		_ok("Il nemico lascia la sua arma", types.has("svd"))
+		_ok("Il nemico lascia i proiettili della sua arma", types.has("ammo_svd"))
+		res0 = pl.reserve.svd
+		pl.global_position = aim_b.global_position
+	elif phase == 3 and t > 0.5:
+		phase = 4
+		_ok("Passandoci sopra si prende l'arma", pl.owned.has("svd"), str(pl.owned))
+		_ok("Passandoci sopra si prendono i proiettili", pl.reserve.svd > res0, "%d -> %d" % [res0, pl.reserve.svd])
+		var fails := 0
+		for r in results:
+			if not r[1]: fails += 1
+		get_tree().quit(fails)
 
 func _visual() -> void:
 	if phase == 0 and t > 2.0:

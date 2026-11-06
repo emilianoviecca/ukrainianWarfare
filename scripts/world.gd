@@ -42,12 +42,21 @@ func build() -> void:
 	_defences()
 	_scatter()
 	_forest()
-	var mat = Batch.material()
+	# Strutture con griglia Kenney proiettata in coordinate mondo (1 riquadro = 4 m); gli alberi restano in tinta unita.
+	var mat: StandardMaterial3D = Batch.material()
+	mat.albedo_texture = _gray_tex("res://assets/proto_struct.dat")
+	mat.uv1_triplanar = true; mat.uv1_world_triplanar = true; mat.uv1_scale = Vector3.ONE * 0.25
+	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
+	mat.albedo_color = Color(1.08, 1.08, 1.08)
 	var mi := MeshInstance3D.new(); mi.mesh = batch.build(); mi.material_override = mat; add_child(mi)
-	var mt := MeshInstance3D.new(); mt.mesh = trees_batch.build(); mt.material_override = mat; add_child(mt)
+	var mt := MeshInstance3D.new(); mt.mesh = trees_batch.build(); mt.material_override = Batch.material(); add_child(mt)
 	astar.update()
 	_apply_solid_cells()
 	batch = null; trees_batch = null
+
+func _gray_tex(path: String) -> ImageTexture:
+	var img := Image.new(); img.load_png_from_buffer(FileAccess.get_file_as_bytes(path)); img.generate_mipmaps()
+	return ImageTexture.create_from_image(img)
 
 # --- griglia per i percorsi dei bot ---
 var _blocked := []
@@ -130,6 +139,8 @@ func _ground() -> void:
 render_mode diffuse_lambert, specular_disabled;
 uniform sampler2D map : source_color, filter_linear_mipmap_anisotropic, repeat_disable;
 uniform sampler2D det : filter_linear_mipmap, repeat_enable;
+uniform sampler2D proto : filter_linear_mipmap_anisotropic, repeat_enable;
+uniform sampler2D proto_lines : filter_linear_mipmap_anisotropic, repeat_enable;
 uniform vec2 half_size;
 varying vec3 wp;
 void vertex(){ wp = (MODEL_MATRIX * vec4(VERTEX,1.0)).xyz; }
@@ -140,11 +151,15 @@ void fragment(){
 	float out_d = max(max(-uv.x,uv.x-1.0), max(-uv.y,uv.y-1.0));
 	c = mix(c, far_col, clamp(out_d*40.0,0.0,1.0));
 	float d = texture(det, wp.xz*0.18).r * 0.6 + texture(det, wp.xz*0.9).r * 0.4;
-	ALBEDO = c * (0.72 + 0.56*d);
+	float sat = max(c.r, max(c.g, c.b)) - min(c.r, min(c.g, c.b));
+	float paved = 1.0 - smoothstep(0.03, 0.09, sat);
+	float grid = texture(proto, wp.xz / 16.0).r;
+	float lines = texture(proto_lines, wp.xz / 8.0).r;
+	ALBEDO = c * (0.72 + 0.56*d) * mix(1.0, (0.86 + 0.26*grid) * lines, paved);
 	ROUGHNESS = 1.0;
 }"""
 	var m := ShaderMaterial.new(); m.shader = sh
-	m.set_shader_parameter("map", ground_tex); m.set_shader_parameter("det", ImageTexture.create_from_image(det)); m.set_shader_parameter("half_size", HALF)
+	m.set_shader_parameter("map", ground_tex); m.set_shader_parameter("det", ImageTexture.create_from_image(det)); m.set_shader_parameter("half_size", HALF); m.set_shader_parameter("proto", _gray_tex("res://assets/proto_ground.dat")); m.set_shader_parameter("proto_lines", _gray_tex("res://assets/proto_struct.dat"))
 	var pm := PlaneMesh.new(); pm.size = Vector2(2400, 2400)
 	var g := MeshInstance3D.new(); g.mesh = pm; g.material_override = m; g.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF; add_child(g)
 	var gb := StaticBody3D.new(); gb.collision_layer = 8; gb.collision_mask = 0

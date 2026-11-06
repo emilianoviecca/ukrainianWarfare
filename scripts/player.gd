@@ -60,6 +60,11 @@ func give(type: String) -> void:
 		"ammo":
 			reserve.pistol += 24; reserve.ak += 60; reserve.svd += 10
 			hud.message("Munizioni +", 1.5)
+		"ammo_ak", "ammo_svd":
+			var kind := type.substr(5)
+			var n: int = randi_range(30, 60) if kind == "ak" else randi_range(10, 20)
+			reserve[kind] += n
+			hud.message("Proiettili %s +%d" % [W.DATA[kind].name, n], 1.6)
 		"med":
 			medkits += 1; hud.message("Kit medico +1", 1.5)
 		"armor":
